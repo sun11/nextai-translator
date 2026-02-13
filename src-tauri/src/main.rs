@@ -412,6 +412,7 @@ fn main() {
             APP_HANDLE.get_or_init(|| app.handle().clone());
             tray::create_tray(&app_handle)?;
             app_handle.plugin(tauri_plugin_global_shortcut::Builder::new().build())?;
+            #[cfg(not(target_os = "linux"))]
             app_handle.plugin(tauri_plugin_updater::Builder::new().build())?;
             // create thumb window
             let _ = windows::get_thumb_window(0, 0);
@@ -454,6 +455,7 @@ fn main() {
             });
 
             let handle = app.handle().clone();
+            #[cfg(not(target_os = "linux"))]
             tauri::async_runtime::spawn(async move {
                 loop {
                     std::thread::sleep(std::time::Duration::from_secs(60 * 10));
@@ -520,6 +522,7 @@ fn main() {
             let _ = app.track_event("app_started", None);
             bind_mouse_hook();
             let handle = app.clone();
+            #[cfg(not(target_os = "linux"))]
             tauri::async_runtime::spawn(async move {
                 let builder = handle.updater_builder();
                 let updater = builder.build().unwrap();

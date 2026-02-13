@@ -37,6 +37,7 @@ pub static TRAY_EVENT_REGISTERED: AtomicBool = AtomicBool::new(false);
 
 pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     let config = get_config().unwrap();
+    #[cfg(not(target_os = "linux"))]
     let check_for_updates_i = MenuItem::with_id(
         app,
         "check_for_updates",
@@ -44,6 +45,7 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
         true,
         None::<String>,
     )?;
+    #[cfg(not(target_os = "linux"))]
     if let Some(Some(_)) = *UPDATE_RESULT.lock() {
         check_for_updates_i
             .set_text("💡 New version available!")
@@ -57,12 +59,29 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     if ALWAYS_ON_TOP.load(Ordering::Acquire) {
         pin_i.set_text("Unpin").unwrap();
     }
+    #[cfg(target_os = "linux")]
+    let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<String>)?;
+    #[cfg(not(target_os = "linux"))]
     let quit_i = PredefinedMenuItem::quit(app, Some("Quit"))?;
     let separator_i = PredefinedMenuItem::separator(app)?;
+    #[cfg(not(target_os = "linux"))]
     let menu = Menu::with_items(
         app,
         &[
             &check_for_updates_i,
+            &settings_i,
+            &ocr_i,
+            &show_i,
+            &hide_i,
+            &pin_i,
+            &separator_i,
+            &quit_i,
+        ],
+    )?;
+    #[cfg(target_os = "linux")]
+    let menu = Menu::with_items(
+        app,
+        &[
             &settings_i,
             &ocr_i,
             &show_i,
@@ -80,6 +99,7 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     }
     TRAY_EVENT_REGISTERED.store(true, Ordering::Release);
     tray.on_menu_event(move |app, event| match event.id.as_ref() {
+        #[cfg(not(target_os = "linux"))]
         "check_for_updates" => {
             show_updater_window();
         }

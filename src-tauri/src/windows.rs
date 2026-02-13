@@ -663,6 +663,7 @@ pub fn show_updater_window() {
     window.show().unwrap();
 
     let handle = APP_HANDLE.get().unwrap();
+    #[cfg(not(target_os = "linux"))]
     CheckUpdateEvent::listen(handle, move |event| {
         let window_clone = window.clone();
         tauri::async_runtime::spawn(async move {
